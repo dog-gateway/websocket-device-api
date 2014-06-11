@@ -60,6 +60,7 @@ import org.osgi.service.log.LogService;
  * @see <a href="http://elite.polito.it">http://elite.polito.it</a>
  * 
  */
+// TODO Add the possibility to update an existing subscription (PUT)
 @WebSocketPath("/api/v1/subscriptions/devices")
 public class DeviceWebSocketEndpoint implements EventHandler
 {
