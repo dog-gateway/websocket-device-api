@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" activate="activate" name="it.polito.elite.dog.communication.websocket.device.api">
+   <implementation class="it.polito.elite.dog.communication.websocket.device.DeviceWebSocketEndpoint"/>
+   <reference bind="addedRESTApi" cardinality="1..1" interface="it.polito.elite.dog.communication.rest.device.api.DeviceRESTApi" name="DeviceRESTApi" policy="static" unbind="removedRESTApi"/>
+   <reference bind="addedWebSocketConnector" cardinality="1..1" interface="it.polito.elite.dog.communication.websocket.api.WebSocketConnector" name="WebSocketConnector" policy="static" unbind="removedWebSocketConnector"/>
+   <property name="event.topics" type="String" value="it/polito/elite/dog/core/library/model/notification/*"/>
+   <service>
+      <provide interface="org.osgi.service.event.EventHandler"/>
+   </service>
+</scr:component>
