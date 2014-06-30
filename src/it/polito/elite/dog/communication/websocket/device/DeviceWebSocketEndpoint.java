@@ -283,25 +283,29 @@ public class DeviceWebSocketEndpoint implements EventHandler
 						{
 							for (String client : this.websocketConnector.get().getConnectedClients())
 							{
-								// transform the notification in JSON format,
-								// with clientId, messageType, type
-								notificationResponse.setNotification(notificationContent);
-								notificationResponse.setClientId(client);
-								notificationResponse.setMessageType("notification");
-								
-								String notificationToSend;
-								try
+								// send the notification only if the registered
+								// client is still connected
+								if (sendToClients.contains(client))
 								{
-									notificationToSend = this.mapper.writeValueAsString(notificationResponse);
-									// send the message
-									this.websocketConnector.get().sendMessage(notificationToSend, client);
+									// transform the notification in JSON
+									// format, with clientId, messageType, type
+									notificationResponse.setNotification(notificationContent);
+									notificationResponse.setClientId(client);
+									notificationResponse.setMessageType("notification");
+									
+									String notificationToSend;
+									try
+									{
+										notificationToSend = this.mapper.writeValueAsString(notificationResponse);
+										// send the message
+										this.websocketConnector.get().sendMessage(notificationToSend, client);
+									}
+									catch (Exception e)
+									{
+										this.logger.log(LogService.LOG_ERROR, "Exception in sending the notification"
+												+ eventName, e);
+									}
 								}
-								catch (Exception e)
-								{
-									this.logger.log(LogService.LOG_ERROR, "Exception in sending the notification"
-											+ eventName, e);
-								}
-								
 							}
 						}
 					}
