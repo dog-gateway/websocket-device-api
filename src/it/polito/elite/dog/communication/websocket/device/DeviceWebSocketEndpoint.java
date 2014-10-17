@@ -47,6 +47,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 import org.codehaus.jackson.node.ArrayNode;
+import org.codehaus.jackson.node.ObjectNode;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventHandler;
@@ -175,7 +176,6 @@ public class DeviceWebSocketEndpoint implements EventHandler
 	 * org.osgi.service.event.EventHandler#handleEvent(org.osgi.service.event
 	 * .Event)
 	 */
-	// @SuppressWarnings("unchecked")
 	@SuppressWarnings("unchecked")
 	@Override
 	public void handleEvent(Event event)
@@ -435,21 +435,40 @@ public class DeviceWebSocketEndpoint implements EventHandler
 				// if we receive only a single notification we can add it
 				// directly to the list of notifications
 				notificationsList.add((String) notifications);
-				
 			}
-			else if (notifications instanceof ArrayNode)
+			else if (notifications instanceof ObjectNode)
 			{
-				// scroll through all the items received and for each of them,
-				// if the client has never subscribed it, we add the specific
-				// notification to the list of notifications
-				ArrayNode notificationsArrayNode = (ArrayNode) notifications;
-				Iterator<JsonNode> iterator = notificationsArrayNode.getElements();
-				while (iterator.hasNext())
+				// get the principal JSON node
+				ObjectNode notificationsNode = (ObjectNode) notifications;
+				
+				// try to get the "notifications" field, in the case of multiple
+				// notification registrations
+				JsonNode notificationsField = notificationsNode.get("notifications");
+				
+				if (notificationsField != null && notificationsField.size() == 1)
 				{
-					JsonNode current = iterator.next();
-					notificationsList.add(current.getTextValue());
+					JsonNode notificationElements = notificationsField.getElements().next();
+					if (notificationElements.isArray())
+					{
+						// get the array containing the notification names
+						ArrayNode notificationArray = (ArrayNode) notificationElements;
+						Iterator<JsonNode> iterator = notificationArray.getElements();
+						
+						// store all the notifications to subscribe
+						while (iterator.hasNext())
+						{
+							JsonNode current = iterator.next();
+							notificationsList.add(current.getTextValue());
+						}
+					}
+					
+				}
+				else
+				{
+					throw new Exception("Malformed JSON Request.");
 				}
 			}
+			
 			// TODO remove, it is here for backward compatibility
 			// if the list is empty, it assumes that the client wants to
 			// subscribe all notifications
@@ -657,9 +676,9 @@ public class DeviceWebSocketEndpoint implements EventHandler
 		// prepare all the possible key associated to the
 		// given pair device-notification
 		Set<String> keys = new HashSet<String>();
-		keys.add(device + "-" + notification);
-		keys.add(device + "-*");
-		keys.add("*-" + notification);
+		keys.add(notification + "-" + device);
+		keys.add(notification + "-*");
+		keys.add("*-" + device);
 		keys.add("*-*");
 		
 		return keys;
